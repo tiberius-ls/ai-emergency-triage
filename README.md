@@ -1,2 +1,26 @@
-# ai-emergency-triage
-AI-powered patient triage system using Python and n8n
+# AI Emergency Triage Assistant
+
+An AI-powered patient triage system that analyses symptoms and classifies severity.
+
+## What it does
+- Accepts patient symptoms as input
+- Uses LLM AI to diagnose and classify severity (CRITICAL, URGENT, STABLE)
+- Returns structured JSON with condition, severity, and immediate action
+- Sends email alerts for CRITICAL cases automatically
+- Logs all triage results to Google Sheets
+
+## Tech stack
+- Python 3
+- Groq API (LLaMA 3.3)
+- Prompt engineering (chain-of-thought, JSON output, few-shot)
+- n8n workflow automation
+- Google Sheets API
+- Gmail API
+
+## Files
+- `hello_groq.py` — basic API connection
+- `chain.py` — 3-step AI diagnosis pipeline
+- `tools.py` — AI-powered drug dose calculator
+
+## Author
+Chukwuemeka Ogbonna — Student Paramedic & AI Automation Developer
