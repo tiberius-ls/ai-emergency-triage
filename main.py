@@ -1,3 +1,4 @@
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException, Security, Depends
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
@@ -14,6 +15,13 @@ load_dotenv()
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 API_KEY = os.getenv("API_KEY")
@@ -58,6 +66,8 @@ def triage(patient: Patient, db: Session = Depends(get_db), key: str = Security(
                     "role": "system",
                     "content": """You are an emergency triage assistant.
                     Respond in valid JSON only with these fields:
+
+                    
                     {
                         "condition": "most likely condition",
                         "severity": "CRITICAL, URGENT, or STABLE",

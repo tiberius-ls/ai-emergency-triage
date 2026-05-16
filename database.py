@@ -21,7 +21,7 @@ class TriageRecord(Base):
     patient_name = Column(String(100))
     age = Column(Integer)
     symptoms = Column(Text)
-    condition = Column(String(200))
+    condition = Column(Text)
     severity = Column(String(20))
     immediate_action = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
