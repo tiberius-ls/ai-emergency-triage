@@ -1,3 +1,7 @@
+## 🚀 Live Demo
+- **App:** https://tiberius-ls.github.io/ai-emergency-triage
+- **API:** https://ai-emergency-triage-production.up.railway.app
+- **API Docs:** https://ai-emergency-triage-production.up.railway.app/docs
 # AI Emergency Triage Assistant
 
 An AI-powered patient triage system that analyses symptoms and classifies severity.
