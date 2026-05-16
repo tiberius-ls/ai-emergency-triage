@@ -1,9 +1,14 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from groq import Groq
+from dotenv import load_dotenv
+import os
+import json
+
+load_dotenv()
 
 app = FastAPI()
-client = Groq(api_key="your -groq-api-key-here")
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 # Define what data the endpoint expects
 class Patient(BaseModel):
