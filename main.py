@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Security
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 from groq import Groq
 from dotenv import load_dotenv
@@ -10,12 +11,21 @@ load_dotenv()
 app = FastAPI()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-# Define what data the endpoint expects
+API_KEY = os.getenv("API_KEY")
+api_key_header = APIKeyHeader(name="X-API-Key")
+
+def verify_api_key(key: str = Security(api_key_header)):
+    if key != API_KEY:
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid API key"
+        )
+    return key
+
 class Patient(BaseModel):
     name: str
     age: int
     symptoms: str
-
 
 @app.get("/")
 def home():
@@ -26,8 +36,23 @@ def health():
     return {"status": "ok"}
 
 @app.post("/triage")
-def triage(patient: Patient):
-    response = client.chat.completions.create(
+def triage(patient: Patient, api_key: str = Security(verify_api_key)):
+    # Validate age
+    if patient.age <= 0 or patient.age > 120:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid age. Must be between 1 and 120"
+        )
+
+    # Validate symptoms
+    if len(patient.symptoms.strip()) < 5:
+        raise HTTPException(
+            status_code=400,
+            detail="Please provide more detailed symptoms"
+        )
+
+    try:
+        response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
                 {
@@ -42,14 +67,23 @@ def triage(patient: Patient):
                 },
                 {
                     "role": "user",
-                    "content": f"Patient data: {patient}, Age: {patient.age}, Symptoms: {patient.symptoms}"
+                    "content": f"Patient: {patient.name}, Age: {patient.age}, Symptoms: {patient.symptoms}"
                 }
             ]
         )
-    
-    import json
-    result = json.loads(response.choices[0].message.content)
-    
+        result = json.loads(response.choices[0].message.content)
+
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=500,
+            detail="AI returned invalid response. Please try again"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=503,
+            detail="AI service temporarily unavailable. Please try again"
+        )
+
     return {
         "patient": patient.name,
         "age": patient.age,
@@ -72,14 +106,25 @@ def drug_dose(data: DrugDose):
         "total_dose": f"{round(total_dose, 2)}mg"
     }
 
-@app.get("/severity/{level}")
-def severity_guide(level: str):
+@app.get("/severity-info")
+def severity_info(level: str = "STABLE", language: str = "english"):
     guides = {
         "CRITICAL": "Immediate life-threatening — call emergency services now",
         "URGENT": "Serious condition — seek medical attention within 1 hour",
         "STABLE": "Non-life-threatening — monitor and seek care when possible"
     }
+
     level = level.upper()
+
     if level not in guides:
-        return {"error": "Invalid severity level. Use CRITICAL, URGENT, or STABLE"}
-    return {"severity": level, "guidance": guides[level]}
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid severity. Use CRITICAL, URGENT, or STABLE"
+        )
+
+    return {
+        "severity": level,
+        "guidance": guides[level],
+        "language": language,
+        "emergency_number": "112" if language == "english" else "112"
+    }
