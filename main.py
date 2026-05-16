@@ -1,3 +1,7 @@
+from curses import raw
+from re import match
+from urllib import response
+
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException, Security, Depends
 from fastapi.security import APIKeyHeader
@@ -80,7 +84,14 @@ def triage(patient: Patient, db: Session = Depends(get_db), key: str = Security(
                 }
             ]
         )
-        result = json.loads(response.choices[0].message.content)
+        import re
+        raw = response.choices[0].message.content.strip()
+        raw = re.sub(r'```json\s*', '', raw)
+        raw = re.sub(r'```\s*', '', raw)
+        match = re.search(r'\{.*\}', raw, re.DOTALL)
+        if match:
+            raw = match.group()
+        result = json.loads(raw)
 
     except json.JSONDecodeError:
         raise HTTPException(status_code=500, detail="AI returned invalid response. Please try again")
